@@ -1,0 +1,221 @@
+---
+title: 'Postawa wobec statystyki'
+author:
+- name: Tomasz Przechlewski
+  email: t.plata-przechlewski@psw.kwidzyn.edu.pl
+  affiliation: Powiślańska Szkoła Wyższa (Kwidzyn/Poland)
+date: "Listopad 2023"
+output:
+  html_document
+description: (c) Tomasz Przechlewski / CC-BY license
+---
+
+```{r setup, include=FALSE }
+knitr::opts_chunk$set(echo = F)
+require(ggplot2)
+require(dplyr)
+require(tidyr)
+library("knitr")
+library("readr")
+```
+
+## Uwagi ogólne
+
+Analiza odpowiedzi na ankietę mierzącą Postawę względem Statystyki (PwS)
+wypełnione do 4/11/2023.
+
+Postawę zmierzono za pomocą 28 pytań, które mierzą cztery różne aspekty postawy:
+afekt, kompetencje poznawcz, wartość i trudność. Mierzymy pozytywną postawę
+stąd pytania 2, 3, 5, 6, 9--12, 14, 16, 18--22 oraz 25--28
+są mierzone za pomocą skali odwróconej:
+
+Afekt
+
+1.  Polubię statystykę 
+2.  Będę się czuł niepewnie gdy będę musiał rozwiązywać zadania statystyczne. (r)
+11. Podczas kolokwiów ze statystyki będę sfrustrowany (r)
+14. Będę zestresowany na zajęciach ze statystyki (r)
+15. Chętnie wezmę udział w zajęciach ze statystyki 
+21. Statystyka mnie przeraża (r)
+
+Kompetencje poznawcze
+
+3.  Mój sposób myślenia powoduje że mam kłopoty ze zrozumieniem statystyki (r)
+9.  Nie mam pojęcia o co chodzi w statystyce (r)
+20. Zajmując się statystyką popełniam wiele błędów matematycznych (r)
+23. Mogę nauczyć się statystyki 
+24. Zrozumiem wzory statystyczne 
+27. Zrozumienie pojęć ze statystyki będzie dla mnie trudne (r)
+
+Wartość
+
+5.  Statystyka jest bezwartościowa (r)
+7.  Statystyka powinna być obowiązkowym przedmiotem na studiach 
+8.  Znajomość statystyki ułatwi mi znalezienie pracy 
+10. Profesjonalista nie potrzebuje znajomości statystyki (r)
+12. Za wyjątkiem wykorzystania w pracy zawodowej statystyka jest bezużyteczna (12)
+13. Wykorzystuję statystykę w codziennym życiu 
+16. Na co dzień rzadko się widzi wykorzystanie statystyki (r)
+19. Statystyka nie przyda się w moim zawodzie (r)
+25. Statystyka nie ma żadnego znaczenia w moim życiu (r)
+
+Trudność
+
+4.  Wzory statystyczne są łatwe do zrozumienia 
+6.  Statystyka jest skomplikowana (r)
+17. Większość ludzi szybko  uczy się statystyki 
+18. Nauczenie się statystyki wymaga dużej dyscypliny (r)
+22. Statystyka wymaga żmudnych obliczeń (r)
+26. Statystyka jest wysoce specjalistyczna (r)
+28. Większość ludzi musi nauczyć się nowego sposobu myślenia aby zajmować się statystyką (r)
+
+Jeżeli osoba uważa statystykę za superłatwą to wartość PwS wyniesie `r 28 * 1`; 
+jeżeli osoba uważa statystykę za supertrudną to PwS=`r 28 *7`.
+
+```{r}
+d0 <- read.csv("Postawa_wobec_statystyki.csv", 
+               sep = ',', 
+               dec = ",",
+               col.names = c("time", "p1", "p2r", 'p3r', 'p4', 'p5r', 'p6r', 'p7',
+            'p8', 'p9r', "p10r", "p11r", 'p12r', 'p13', 'p14r', 'p15', 'p16r', 'p17',
+            'p18r', 'p19r', "p20r", "p21r", 'p22r', 'p23', 'p24', 'p25r', 'p26r', 'p27r', 'p28r',
+            'plec', 'staz', 'kierunek'),
+             skip=1, header=F, na.string="NA") 
+
+d1 <- d0 %>%
+  mutate(across(c("p1", "p2r", 'p3r', 'p4', 'p5r', 'p6r', 'p7',
+            'p8', 'p9r', "p10r", "p11r", 'p12r', 'p13', 'p14r', 'p15', 'p16r', 'p17r',
+            'p18r', 'p19r', "p20r", "p21r", 'p22r', 'p23', 'p24', 'p25r', 'p26r', 'p27r', 'p28r'
+                  ), ~ case_when(
+    . == "Zdecydowanie nie zgadzam się" ~ 1,
+    . == "Nie zgadzam się"              ~ 2,
+    . == "Raczej nie zgadzam się"  ~ 3,
+    . == "Nie mam zdania"  ~ 4,
+    . == "Raczej zgadzam się"  ~ 5,
+    . == "Zgadzam się" ~ 6,
+    . == "Zdecydowanie się zgadzam" ~ 7
+  )))  %>%
+  mutate ( p2 = 8 - p2r,    p3 = 8 - p3r,   p5 = 8 - p5r,    p6 = 8 - p6r, 
+           p9 = 8 - p9r,   p10 = 8 - p10r,  p11 = 8 - p11r,  p12 = 8 - p12r, 
+           p14 = 8 - p14r, p16 = 8 - p16r,  p18 = 8 - p18r, 
+           p19 = 8 - p19r, p20 = 8 - p20r,  p21 = 8 - p21r,  p22 = 8 - p22r, 
+           p25 = 8 - p25r, p26 = 8 - p26r,  p27 = 8 - p27r,  p28 = 8 - p28r ) %>%
+  mutate (pws = p1 + p2 + p3 + p4 + p5 + p6 + p7 + p8 + p9 + p10 +
+            p11 + p12 + p13 + p14 + p15 + p16 + p17 + p18 + p19  + p20 +
+            p21 + p22 + p23 + p24 + p25 + p26 + p27 + p28,
+          pws.afekt = p1 + p2 + p11 + p14 + p15 + p21,
+          pws.komptetencje = p3 + p9 + p20 + p23 + p24 + p27,
+          pws.wartosc = p5 + p7 + p8 + p10 + p12 + p13 + p16 + p19 + p25,
+          pws.trudnosc = p4 + p6 + p17 + p18 + p22 + p26 + p28
+   ) %>%
+  select (pws, sex=plec, staz, kierunek, pws.afekt, pws.kompetencje, pws.wartosc, pws.trudnosc ) %>%
+  mutate( staz=case_when(staz >= 10 ~ "d",  staz >= 3 ~ "s",
+                         TRUE ~ "m") ) 
+
+```
+
+Średnia wartość PwS wyniosła `r mean(d1$pws)` (co stanowi `r mean(d1$pws)/(28 * 7) *100`% wartości maksymalnej)
+Wartość maksymalna `r max(d1$pws)`; wartość minimalna `r min(d1$pws)`.
+
+```{r}
+q1 <- ggplot(d1, aes(x=pws)) +
+  ##geom_vline(xintercept = true.mean.w, colour="forestgreen", size=.4) +
+  geom_histogram(binwidth=8, alpha=.5, fill="steelblue") +
+  ggtitle("Rozkład wartości PwS", subtitle='rozpiętość przedziału 8')
+q1
+```
+
+
+Łącznie otrzymano `r nrow(d1)` ankiet.
+
+## Płeć respondentów
+
+```{r}
+sex.f <- d1 %>%
+  select (sex) %>%
+  group_by(sex)%>%
+  summarize(n=n())%>%
+  mutate(prop=n/sum(n) * 100 )
+
+sex.t <- kable(sex.f, col.names = c('płeć', 'n', '%'))
+sex.t
+```
+
+albo na wykresie
+
+```{r}
+p.1 <- ggplot(sex.f, aes(x = reorder(sex, n), y = n )) +
+  ggtitle("Badani wg płci") +
+  xlab("") + ylab("%") +
+  geom_bar(position = 'dodge', stat = 'identity', fill = "steelblue") +
+  geom_text(data=sex.f, aes(label=sprintf("%.2f", prop), y= prop), hjust=1.5, color="white" ) +
+  #scale_x_discrete (breaks=var.names,  labels=var.labels) +
+  coord_flip()
+p.1
+```
+
+## Płeć a PwS
+
+```{r}
+ex.sex.f <- d1 %>%
+  select (pws, sex) %>%
+  group_by(sex)%>%
+  summarize(m=mean(pws))
+
+ex.sex.t <- kable(ex.sex.f, col.names = c('płeć', 'średni pws'))
+
+ex.sex.t
+```
+
+## Staż a PwS
+
+```{r}
+staz.f <- d1 %>%
+  select (staz) %>%
+  group_by(staz)%>%
+  summarize(n=n())%>%
+  mutate(prop=n/sum(n) * 100 )
+
+staz.t <- kable(staz.f, col.names = c('staz', 'n', '%'))
+staz.t
+```
+
+```{r}
+ex.staz.f <- d1 %>%
+  select (pws, staz) %>%
+  group_by(staz)%>%
+  summarize(m=mean(pws))
+
+ex.staz.t <- kable(ex.staz.f, col.names = c('staz', 'średni pws'))
+
+ex.staz.t
+
+```
+
+## Kierunek a PwS
+
+```{r}
+ex.kierunek.f <- d1 %>%
+  select (pws, kierunek) %>%
+  group_by(kierunek)%>%
+  summarize(m=mean(pws))
+
+ex.kierunek.t <- kable(ex.kierunek.f, col.names = c('kierunek', 'średni pws'))
+
+ex.kierunek.t
+```
+
+## Czy PwS oraz płeć są skorelowane?
+
+
+```{r}
+fear.sex.f <- d1 %>%
+  select (pws, sex) %>% 
+  table()
+## test chi kwadrat
+chi_test <- chisq.test(fear.sex.f)
+chi_test$statistic
+chi_test$p.value
+```
+
+Nie ma podstaw do odrzucenia hipotezy że nie ma związku pomiędzy PwS a płcią
